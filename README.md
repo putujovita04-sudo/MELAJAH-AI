@@ -352,6 +352,8 @@ Repo sudah menyertakan `render.yaml`.
 4. Isi `AI_API_KEY` di Environment (opsional; kosongkan untuk mode lokal).
 5. Deploy. Frontend dan API berada di URL yang sama.
 
+> **Jika New → Blueprint meminta pembayaran:** Blueprint adalah fitur workspace/infrastruktur, dan `plan: free` di `render.yaml` hanya berlaku untuk instance komputasi — bukan jaminan alur Blueprint gratis. Jika akunmu diminta billing, lewati Blueprint dan buat **Web Service manual** (langkah di bawah). Yang gratis adalah **Free web instance**, bukan fitur Blueprint-nya. Jika Render tetap meminta kartu untuk service baru, gunakan alternatif seperti Koyeb, Railway, Fly.io, atau VPS.
+
 Alternatif manual di Render:
 
 - Runtime: **Node**
