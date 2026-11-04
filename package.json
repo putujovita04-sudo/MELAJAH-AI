@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "description": "MELAJAH AI — game ular tangga edukasi budaya Bali dengan juri AI",
+  "engines": {
+    "node": ">=20"
+  },
   "workspaces": [
     "client",
     "server"

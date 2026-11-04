@@ -11,6 +11,7 @@ import { getBankSize } from "./services/questionService.js";
 
 const app = express();
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+const distDir = path.join(rootDir, "client/dist");
 
 app.disable("x-powered-by");
 app.use((req, res, next) => {
@@ -68,18 +69,15 @@ app.use("/api", apiLimiter);
 app.use("/api", apiRoutes);
 app.use("/api", sessionRoutes);
 
-if (ENV.nodeEnv === "production") {
-  const distDir = path.join(rootDir, "client/dist");
-  if (existsSync(distDir)) {
-    app.use(express.static(distDir));
-    app.get("*", (req, res, next) => {
-      if (req.path.startsWith("/api")) {
-        next();
-        return;
-      }
-      res.sendFile(path.join(distDir, "index.html"));
-    });
-  }
+if (existsSync(distDir)) {
+  app.use(express.static(distDir));
+  app.get("*", (req, res, next) => {
+    if (req.path.startsWith("/api")) {
+      next();
+      return;
+    }
+    res.sendFile(path.join(distDir, "index.html"));
+  });
 }
 
 app.use("/api", (req, res) => {

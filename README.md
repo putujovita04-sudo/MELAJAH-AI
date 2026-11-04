@@ -20,6 +20,7 @@ Bukan mockup — seluruh alur sesi, papan 100 kotak, dadu, giliran, penilaian, d
 - [Struktur proyek](#struktur-proyek)
 - [API](#api)
 - [Pengujian](#pengujian)
+- [Deployment](#deployment)
 - [Build produksi](#build-produksi)
 - [Pemecahan masalah](#pemecahan-masalah)
 
@@ -324,6 +325,63 @@ Mencakup:
 
 Uji API manual dapat dilakukan dengan `curl` pada endpoint di atas.
 
+## Deployment
+
+### Kenapa GitHub Pages / static hosting tidak bisa langsung
+
+MELAJAH AI bukan situs statis. Frontend React membutuhkan backend Express untuk:
+
+- membuat dan menyimpan sesi,
+- kode/QR dan daftar pemain,
+- memberi angka dadu dan memvalidasi giliran,
+- menyimpan jawaban dan memanggil Juri AI,
+- menyimpan nilai manual dan hasil akhir.
+
+GitHub Pages, Netlify static, dan Vercel static hanya menyajikan HTML/JS. Jika hanya frontend yang di-deploy, halaman akan terbuka tetapi lobby, join, dadu, dan penilaian akan gagal karena `/api/...` tidak ada.
+
+### Render — disarankan (satu Node service)
+
+Repo sudah menyertakan `render.yaml`.
+
+1. Buka [Render Dashboard](https://dashboard.render.com/) → **New → Blueprint**.
+2. Hubungkan repo `putujovita04-sudo/MELAJAH-AI`.
+3. Render membaca `render.yaml`:
+   - Build: `npm ci --include=dev && npm run build`
+   - Start: `npm start`
+   - Health check: `/api/health`
+4. Isi `AI_API_KEY` di Environment (opsional; kosongkan untuk mode lokal).
+5. Deploy. Frontend dan API berada di URL yang sama.
+
+Alternatif manual di Render:
+
+- Runtime: **Node**
+- Build Command: `npm ci --include=dev && npm run build`
+- Start Command: `npm start`
+- Health Check Path: `/api/health`
+- Environment: `NODE_ENV=production`
+
+### Docker / VPS
+
+```bash
+docker build -t melajah-ai .
+docker run -p 4100:4100 --env-file .env melajah-ai
+```
+
+Buka `http://localhost:4100`. Express menyajikan API dan `client/dist`.
+
+### Frontend dan backend terpisah
+
+Jika frontend di Vercel/Netlify dan backend di Render/Railway:
+
+- Deploy backend sebagai Node service.
+- Set `VITE_API_URL=https://backend-anda` saat build frontend.
+- Set `CLIENT_ORIGIN=https://frontend-anda` di backend.
+- Jangan gunakan Vercel/Netlify Functions untuk backend ini karena sesi disimpan di memori dan akan hilang/berbeda antar-instance.
+
+### Catatan penting sesi
+
+Sesi disimpan **di memori proses**. Gunakan **satu instance** backend dan jangan biarkan instance tidur saat permainan berlangsung. Render free tier bisa tidur setelah tidak aktif, sehingga sesi hilang. Untuk kelas yang berjalan lama, gunakan instance always-on atau tambahkan Redis sebagai session store.
+
 ## Build produksi
 
 ```bash
@@ -331,7 +389,7 @@ npm run build
 NODE_ENV=production npm start
 ```
 
-Server menyajikan `client/dist` pada port yang sama (default 4100). Untuk deployment multi-domain, atur `CLIENT_ORIGIN`.
+Server menyajikan `client/dist` pada port yang sama (default 4100). Static serving juga aktif saat `client/dist` ada, meskipun `NODE_ENV` tidak diset. Untuk deployment multi-domain, atur `CLIENT_ORIGIN`.
 
 ## Keamanan data pribadi
 

@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: melajah-ai
+    runtime: node
+    plan: free
+    region: singapore
+    branch: main
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: AI_API_KEY
+        sync: false
+      - key: AI_BASE_URL
+        value: https://api.openai.com/v1
+      - key: AI_MODEL
+        value: gpt-4o-mini
+      - key: SESSION_TTL_MS
+        value: "21600000"
+      - key: VERDICT_AUTO_MS
+        value: "10000"
