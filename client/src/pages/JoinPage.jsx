@@ -79,7 +79,8 @@ export default function JoinPage({ initialCode = "", onBack, onJoined, onHost })
             <p className="mx-auto mt-3 max-w-xl rounded border border-line bg-gold-soft px-3 py-2 text-[0.8rem] font-semibold leading-snug text-ink-2">
               <strong className="text-ink">Mode demo Vercel:</strong> buka tab pemain
               lewat tombol <em>“Buka tab pemain”</em> di layar penyelenggara, di
-              browser yang sama.
+              browser yang sama. Jika tidak bisa, gunakan <em>“Tambah pemain demo”</em>{" "}
+              di layar penyelenggara.
             </p>
           )}
         </div>
