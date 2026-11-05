@@ -176,8 +176,9 @@ export default function HostPage({ onBack, onSessionCreated }) {
             </span>
             <h1 className="h2-display mt-2">Siapkan soal, lalu main bersama</h1>
             <p className="lead mt-2 text-[1rem]">
-              Pilih bank soal budaya Bali atau buat soal baru dari materi pelajaranmu.
-              Setelah sesi dibuat, bagikan kode atau QR kepada pemain.
+              {localMode
+                ? "Pilih bank soal. Setelah sesi demo dibuat, tambahkan pemain langsung di layar penyelenggara."
+                : "Pilih bank soal budaya Bali atau buat soal baru dari materi pelajaranmu. Setelah sesi dibuat, bagikan kode atau QR kepada pemain."}
             </p>
             {localMode && (
               <div className="mt-3 rounded border-2 border-ink bg-gold-soft p-3 text-[0.84rem] font-semibold leading-snug text-ink-2">
@@ -215,7 +216,7 @@ export default function HostPage({ onBack, onSessionCreated }) {
           <li className="hidden h-0.5 w-5 bg-line sm:block" aria-hidden="true" />
           <li className="flex items-center gap-1.5 rounded border border-line bg-surface px-2.5 py-1 text-ink-2">
             <span className="grid h-5 w-5 place-items-center rounded-full bg-surface-2 text-[0.64rem]">2</span>
-            Bagikan kode
+            {localMode ? "Tambah pemain" : "Bagikan kode"}
           </li>
           <li className="hidden h-0.5 w-5 bg-line sm:block" aria-hidden="true" />
           <li className="flex items-center gap-1.5 rounded border border-line bg-surface px-2.5 py-1 text-ink-2">
@@ -556,7 +557,7 @@ export default function HostPage({ onBack, onSessionCreated }) {
                   disabled={!canContinue || creating}
                   onClick={continueToSetup}
                 >
-                  {creating ? "Membuat sesi..." : "Buat sesi & kode"}
+                  {creating ? "Membuat sesi..." : localMode ? "Buat sesi demo" : "Buat sesi & kode"}
                 </Button>
                 {!canContinue && (
                   <p className="mt-1.5 text-center text-[0.74rem] font-semibold text-ink-3">

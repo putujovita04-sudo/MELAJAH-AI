@@ -198,9 +198,11 @@ export default function HostGamePage({ session, onHome, onNewSession }) {
         backLabel={isLobby ? "Keluar" : "Akhiri"}
         compactLogo
         right={
-          <span className="chip hidden border-ink/15 bg-gold-soft min-[380px]:inline-flex">
-            <KeyRound size={13} strokeWidth={3} aria-hidden="true" /> {state.code}
-          </span>
+          !state.localMode ? (
+            <span className="chip hidden border-ink/15 bg-gold-soft min-[380px]:inline-flex">
+              <KeyRound size={13} strokeWidth={3} aria-hidden="true" /> {state.code}
+            </span>
+          ) : null
         }
       />
 
@@ -211,7 +213,11 @@ export default function HostGamePage({ session, onHome, onNewSession }) {
               <ShieldCheck size={13} strokeWidth={3} aria-hidden="true" /> Meja penyelenggara
             </span>
             <h1 className="h3-display mt-1 text-[1.8rem] sm:text-[2.15rem]">
-              {isLobby ? "Ajak pemain bergabung" : "Kendalikan permainan"}
+              {isLobby
+                ? state.localMode
+                  ? "Siapkan pemain demo"
+                  : "Ajak pemain bergabung"
+                : "Kendalikan permainan"}
             </h1>
           </div>
           <div className="flex items-center gap-2">
@@ -251,6 +257,7 @@ export default function HostGamePage({ session, onHome, onNewSession }) {
           <aside className="order-1 space-y-2.5 lg:order-2 lg:sticky lg:top-4">
             {isLobby ? (
               <>
+                {!state.localMode && (
                 <section className="panel overflow-hidden shadow-float" aria-labelledby="join-title">
                   <div className="poleng h-2.5" aria-hidden="true" />
                   <div className="p-4">
@@ -276,47 +283,37 @@ export default function HostGamePage({ session, onHome, onNewSession }) {
                       </button>
                     </div>
 
-                    {state.localMode ? (
-                      <div className="mt-3 rounded border-2 border-ink bg-teal-soft p-3">
-                        <p className="font-display text-[1rem] font-bold leading-tight">
-                          Mode demo lokal
-                        </p>
-                        <p className="mt-1 text-[0.78rem] font-semibold leading-snug text-ink-2">
-                          Vercel tidak menjalankan backend. Mainkan di satu layar:
-                          tambahkan pemain demo di daftar bawah, lalu catat jawaban
-                          mereka langsung di panel penyelenggara.
-                        </p>
-                        <p className="mt-2 rounded border border-line bg-surface px-2.5 py-2 text-[0.72rem] font-semibold leading-snug text-ink-2">
-                          Tidak perlu membuka tab atau HP lain. Untuk pemain di
-                          perangkat berbeda, diperlukan backend Node.
-                        </p>
-                      </div>
-                    ) : (
-                      <>
-                        <div className="mt-3 flex items-center justify-center rounded border border-line bg-surface p-2">
-                          <QRCodeSVG
-                            value={joinUrl}
-                            size={168}
-                            bgColor="#FFFDF8"
-                            fgColor="#2A1B12"
-                            level="M"
-                            title={`QR untuk bergabung ke sesi ${state.code}`}
-                          />
-                        </div>
-                        <p className="mt-1.5 break-all text-center text-[0.68rem] font-semibold text-ink-3">
-                          {joinUrl}
-                        </p>
-                        <p className="mt-2 text-[0.78rem] leading-snug text-ink-2">
-                          Pemain membuka tautan/QR, memasukkan nama panggilan, lalu menunggu
-                          penyelenggara memulai.
-                        </p>
-                      </>
-                    )}
+                    <div className="mt-3 flex items-center justify-center rounded border border-line bg-surface p-2">
+                      <QRCodeSVG
+                        value={joinUrl}
+                        size={168}
+                        bgColor="#FFFDF8"
+                        fgColor="#2A1B12"
+                        level="M"
+                        title={`QR untuk bergabung ke sesi ${state.code}`}
+                      />
+                    </div>
+                    <p className="mt-1.5 break-all text-center text-[0.68rem] font-semibold text-ink-3">
+                      {joinUrl}
+                    </p>
+                    <p className="mt-2 text-[0.78rem] leading-snug text-ink-2">
+                      Pemain membuka tautan/QR, memasukkan nama panggilan, lalu menunggu
+                      penyelenggara memulai.
+                    </p>
                   </div>
                   <div className="poleng h-2.5" aria-hidden="true" />
                 </section>
+                )}
 
                 <section className="panel-soft p-3" aria-labelledby="lobby-players-title">
+                  {state.localMode && (
+                    <div className="mb-2 rounded border-2 border-ink bg-gold-soft p-2.5 text-[0.78rem] font-semibold leading-snug text-ink-2">
+                      <strong className="text-ink">Mode demo satu layar.</strong> Vercel
+                      tidak menjalankan backend. Tambahkan pemain di bawah, lalu mulai.
+                      Jawaban dicatat lewat panel penyelenggara. HP/browser lain
+                      membutuhkan backend.
+                    </div>
+                  )}
                   <div className="flex items-center justify-between gap-2">
                     <h2 id="lobby-players-title" className="text-[0.68rem] font-extrabold uppercase tracking-[0.12em] text-ink-2">
                       Pemain bergabung
@@ -327,7 +324,9 @@ export default function HostGamePage({ session, onHome, onNewSession }) {
                   </div>
                   {state.players.length === 0 ? (
                     <p className="mt-2 rounded border border-dashed border-line bg-surface p-3 text-center text-[0.8rem] font-semibold text-ink-2">
-                      Belum ada pemain. Bagikan kode atau QR di atas.
+                      {state.localMode
+                        ? "Belum ada pemain. Tambahkan pemain demo di bawah."
+                        : "Belum ada pemain. Bagikan kode atau QR di atas."}
                     </p>
                   ) : (
                     <ol className="mt-2 space-y-1.5">
