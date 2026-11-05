@@ -182,9 +182,9 @@ export default function HostPage({ onBack, onSessionCreated }) {
             {localMode && (
               <div className="mt-3 rounded border-2 border-ink bg-gold-soft p-3 text-[0.84rem] font-semibold leading-snug text-ink-2">
                 <strong className="text-ink">Mode demo Vercel.</strong> Backend tidak
-                terdeteksi, jadi sesi berjalan lokal di browser ini. Pemain harus
-                bergabung lewat tab di browser yang sama; materi sendiri tidak tersedia.
-                Untuk permainan multi-perangkat, deploy backend Node.
+                terdeteksi, jadi sesi berjalan lokal di browser ini. Kamu bisa
+                menambahkan pemain demo langsung dari layar penyelenggara. Untuk
+                permainan multi-perangkat, deploy backend Node.
               </div>
             )}
           </div>

@@ -518,6 +518,43 @@ export const joinLocalSession = (code, rawName) => {
   };
 };
 
+export const addLocalPlayer = (code, hostToken, rawName) => {
+  const session = requireSession(code);
+  maybeFinalize(session);
+  requireHost(session, hostToken);
+  if (session.phase !== "lobby") {
+    throw new Error("Pemain hanya bisa ditambahkan sebelum permainan dimulai.");
+  }
+  if (session.players.length >= session.maxPlayers) throw new Error("Sesi sudah penuh.");
+  const name = cleanName(rawName);
+  if (!name) throw new Error("Nama panggilan wajib diisi.");
+  if (session.players.some((player) => player.name.toLowerCase() === name.toLowerCase())) {
+    throw new Error("Nama panggilan itu sudah dipakai.");
+  }
+  const usedColors = new Set(session.players.map((player) => player.color));
+  const palette =
+    PLAYER_PALETTE.find((item) => !usedColors.has(item.color)) ??
+    PLAYER_PALETTE[session.players.length % PLAYER_PALETTE.length];
+  const player = {
+    id: `player-${crypto.randomUUID().slice(0, 8)}`,
+    token: crypto.randomUUID(),
+    name,
+    color: palette.color,
+    soft: palette.soft,
+    gender: palette.gender,
+    position: 1,
+    score: 0,
+    stats: { correct: 0, near: 0, wrong: 0, answered: 0 },
+    joinedAt: Date.now(),
+  };
+  session.players.push(player);
+  session.order.push(player.id);
+  session.notice = `${name} ditambahkan ke sesi demo satu layar.`;
+  addLog(session, session.notice, "teal");
+  saveSession(session);
+  return hostState(session);
+};
+
 export const startLocalSession = (code, hostToken) => {
   const session = requireSession(code);
   maybeFinalize(session);
@@ -636,8 +673,27 @@ export const answerLocalQuestion = (code, { playerId, playerToken, answer }) => 
   return publicState(session);
 };
 
-export const skipLocalQuestion = (code, hostToken) => {
+export const answerLocalAsHost = (code, hostToken, answer) => {
   const session = requireSession(code);
+  maybeFinalize(session);
+  requireHost(session, hostToken);
+  if (session.phase !== "question") {
+    throw new Error("Tidak ada pertanyaan yang menunggu jawaban.");
+  }
+  const player = currentPlayer(session);
+  if (!player) throw new Error("Tidak ada pemain aktif.");
+  const safeAnswer = String(answer ?? "").trim().slice(0, 500);
+  if (!safeAnswer) throw new Error("Jawaban tidak boleh kosong.");
+  session.currentAnswer = safeAnswer;
+  session.phase = "judging";
+  session.judgingAt = Date.now();
+  session.notice = `Jawaban ${player.name} sedang dinilai...`;
+  addLog(session, `Penyelenggara mencatat jawaban ${player.name}.`, "sky");
+  saveSession(session);
+  return hostState(session);
+};
+
+export const skipLocalQuestion = (code, hostToken) => {  const session = requireSession(code);
   maybeFinalize(session);
   requireHost(session, hostToken);
   if (session.phase !== "question") throw new Error("Tidak ada soal yang bisa dilewati.");

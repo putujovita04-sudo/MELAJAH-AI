@@ -377,8 +377,9 @@ Repo sudah menyertakan `vercel.json`. Jika Vercel hanya menjalankan frontend:
 
 - Semua state sesi disimpan di `localStorage` browser.
 - Bank soal tetap berfungsi; AI memakai penilaian kata kunci lokal.
-- Penyelenggara membuat sesi, lalu menekan **Buka tab pemain** untuk setiap pemain.
-- Pemain harus berada di **browser/perangkat yang sama**; kode/QR tidak dapat dipakai dari HP lain.
+- Penyelenggara membuat sesi, lalu dapat **menambahkan pemain demo** langsung dari layar penyelenggara dan mencatat jawaban mereka di panel demo. Ini bisa dimainkan di satu layar tanpa backend.
+- Alternatifnya, tekan **Buka tab pemain** untuk setiap pemain di browser yang sama.
+- Pemain di HP/perangkat lain tidak bisa bergabung pada mode ini; kode/QR memerlukan backend.
 - Materi sendiri dan AI server tidak tersedia di mode ini.
 
 Untuk pemain di perangkat berbeda, deploy backend Node (Render/Koyeb/Railway/VPS), lalu set `VITE_API_URL` di Vercel dan `CLIENT_ORIGIN` di backend.

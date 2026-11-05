@@ -34,6 +34,10 @@ import Modal from "../components/Modal";
 import SessionResult from "../components/SessionResult";
 import { useSessionPolling } from "../hooks/useSessionPolling";
 import {
+  addLocalPlayer,
+  answerLocalAsHost,
+} from "../utils/localSession";
+import {
   buildJoinUrl,
   endGameSession,
   overrideSessionVerdict,
@@ -86,6 +90,7 @@ export default function HostGamePage({ session, onHome, onNewSession }) {
   const [manualScore, setManualScore] = useState("");
   const [manualComment, setManualComment] = useState("");
   const [secondsLeft, setSecondsLeft] = useState(null);
+  const [newPlayerName, setNewPlayerName] = useState("");
 
   const joinUrl = useMemo(() => (state ? buildJoinUrl(state.code) : ""), [state?.code]);
 
@@ -277,9 +282,9 @@ export default function HostGamePage({ session, onHome, onNewSession }) {
                           Mode demo lokal
                         </p>
                         <p className="mt-1 text-[0.78rem] font-semibold leading-snug text-ink-2">
-                          Vercel tidak menjalankan backend. Pemain harus membuka tab
-                          di browser/perangkat yang sama dengan penyelenggara. Buka
-                          tab satu kali untuk setiap pemain.
+                          Vercel tidak menjalankan backend. Tambahkan pemain demo di
+                          daftar bawah dan catat jawaban mereka langsung di layar ini.
+                          Alternatifnya, buka tab pemain di browser yang sama.
                         </p>
                         <Button
                           variant="teal"
@@ -389,6 +394,49 @@ export default function HostGamePage({ session, onHome, onNewSession }) {
                       })}
                     </ol>
                   )}
+                  {state.localMode && (
+                    <form
+                      className="mt-3 rounded border border-line bg-surface p-2.5"
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        const name = newPlayerName.trim();
+                        if (!name || busy || state.players.length >= state.maxPlayers) return;
+                        run(
+                          () => addLocalPlayer(code, hostToken, name),
+                          () => setNewPlayerName(""),
+                        );
+                      }}
+                    >
+                      <label htmlFor="demo-player-name" className="label !text-[0.68rem]">
+                        Tambah pemain demo (satu layar)
+                      </label>
+                      <div className="mt-1 flex gap-1.5">
+                        <input
+                          id="demo-player-name"
+                          value={newPlayerName}
+                          onChange={(event) => setNewPlayerName(event.target.value.slice(0, 14))}
+                          placeholder="Nama pemain"
+                          maxLength={14}
+                          autoComplete="off"
+                          className="field !min-h-10 !py-1 text-[0.85rem]"
+                        />
+                        <Button
+                          type="submit"
+                          variant="secondary"
+                          size="sm"
+                          icon={Plus}
+                          disabled={busy || !newPlayerName.trim() || state.players.length >= state.maxPlayers}
+                          className="shrink-0"
+                        >
+                          Tambah
+                        </Button>
+                      </div>
+                      <p className="mt-1.5 text-[0.7rem] font-semibold leading-snug text-ink-3">
+                        Pemain menjawab langsung di layar ini. Tidak perlu membuka tab
+                        atau HP lain.
+                      </p>
+                    </form>
+                  )}
                   <Button
                     variant="primary"
                     className="mt-3 w-full"
@@ -485,6 +533,8 @@ export default function HostGamePage({ session, onHome, onNewSession }) {
                     setManualScore={setManualScore}
                     manualComment={manualComment}
                     setManualComment={setManualComment}
+                    localMode={state.localMode}
+                    onHostAnswer={(answer) => run(() => answerLocalAsHost(code, hostToken, answer))}
                     onSkip={() => run(() => skipSessionQuestion(code, hostToken))}
                     onOverride={() =>
                       run(() =>
@@ -599,12 +649,26 @@ function QuestionPanel({
   setManualScore,
   manualComment,
   setManualComment,
+  localMode,
+  onHostAnswer,
   onSkip,
   onOverride,
   onResolve,
 }) {
   const question = state.currentQuestion;
+  const [demoAnswer, setDemoAnswer] = useState("");
+  const [demoSelected, setDemoSelected] = useState("");
+
+  useEffect(() => {
+    if (state.phase === "question") {
+      setDemoAnswer("");
+      setDemoSelected("");
+    }
+  }, [question?.id, state.phase]);
+
   if (!question) return null;
+  const isMcq = question.type === "pilihan";
+  const demoValue = isMcq ? demoSelected : demoAnswer;
   return (
     <section className="panel overflow-hidden" aria-labelledby="host-question-title">
       <div className="flex items-center justify-between gap-2 border-b-2 border-ink bg-gold-soft px-3 py-2">
@@ -654,10 +718,59 @@ function QuestionPanel({
           </div>
         )}
 
+        {localMode && state.phase === "question" && (
+          <div className="mt-3 rounded border-2 border-ink bg-surface p-2.5">
+            <p className="text-[0.68rem] font-extrabold uppercase tracking-wide text-ink-2">
+              Jawab untuk {state.currentPlayerName} · demo satu layar
+            </p>
+            {isMcq ? (
+              <div className="mt-1.5 grid gap-1.5">
+                {question.options.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => setDemoSelected(option)}
+                    aria-pressed={demoSelected === option}
+                    disabled={busy}
+                    className={cn(
+                      "rounded border-2 px-2 py-1.5 text-left text-[0.8rem] font-semibold transition",
+                      demoSelected === option
+                        ? "border-accent bg-accent-soft"
+                        : "border-line bg-surface hover:border-ink",
+                    )}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <textarea
+                value={demoAnswer}
+                onChange={(event) => setDemoAnswer(event.target.value.slice(0, 400))}
+                rows={2}
+                maxLength={400}
+                placeholder={`Tulis jawaban ${state.currentPlayerName}...`}
+                className="field mt-1.5 !min-h-10 resize-none !py-1.5 text-[0.82rem]"
+              />
+            )}
+            <Button
+              variant="teal"
+              size="sm"
+              className="mt-2 w-full"
+              disabled={busy || !demoValue.trim()}
+              onClick={() => onHostAnswer(demoValue)}
+            >
+              Kirim jawaban pemain
+            </Button>
+          </div>
+        )}
+
         {state.phase === "question" && (
           <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
             <p className="text-[0.78rem] font-semibold text-ink-2" aria-live="polite">
-              Menunggu jawaban {state.currentPlayerName}...
+              {localMode
+                ? `Jawab untuk ${state.currentPlayerName} di panel demo, atau tunggu pemain.`
+                : `Menunggu jawaban ${state.currentPlayerName}...`}
             </p>
             <Button variant="secondary" size="sm" onClick={onSkip} disabled={busy} icon={X}>
               Lewati (nilai 0)
