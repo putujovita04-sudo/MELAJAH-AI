@@ -102,7 +102,7 @@ const requireSession = (code) => {
   const session = getSession(code);
   if (!session) {
     throw new Error(
-      "Sesi demo tidak ditemukan di browser ini. Di Vercel, gunakan tombol “Tambah pemain demo” di layar penyelenggara, atau buka tab pemain lewat tombol “Buka tab pemain” di browser yang sama. HP/browser lain membutuhkan backend.",
+      "Sesi demo tidak ditemukan di browser ini. Di Vercel, mainkan di satu layar: buka mode penyelenggara, buat sesi, lalu gunakan “Tambah pemain demo”. HP/browser lain membutuhkan backend.",
     );
   }
   return session;

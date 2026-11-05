@@ -282,20 +282,13 @@ export default function HostGamePage({ session, onHome, onNewSession }) {
                           Mode demo lokal
                         </p>
                         <p className="mt-1 text-[0.78rem] font-semibold leading-snug text-ink-2">
-                          Vercel tidak menjalankan backend. Tambahkan pemain demo di
-                          daftar bawah dan catat jawaban mereka langsung di layar ini.
-                          Alternatifnya, buka tab pemain di browser yang sama.
+                          Vercel tidak menjalankan backend. Mainkan di satu layar:
+                          tambahkan pemain demo di daftar bawah, lalu catat jawaban
+                          mereka langsung di panel penyelenggara.
                         </p>
-                        <Button
-                          variant="teal"
-                          className="mt-2 w-full"
-                          icon={QrCode}
-                          onClick={() => window.open(joinUrl, "_blank", "noopener,noreferrer")}
-                        >
-                          Buka tab pemain
-                        </Button>
-                        <p className="mt-1.5 text-center text-[0.7rem] font-semibold text-ink-3">
-                          Ulangi tombol ini untuk pemain kedua.
+                        <p className="mt-2 rounded border border-line bg-surface px-2.5 py-2 text-[0.72rem] font-semibold leading-snug text-ink-2">
+                          Tidak perlu membuka tab atau HP lain. Untuk pemain di
+                          perangkat berbeda, diperlukan backend Node.
                         </p>
                       </div>
                     ) : (

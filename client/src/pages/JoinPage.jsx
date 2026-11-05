@@ -77,10 +77,9 @@ export default function JoinPage({ initialCode = "", onBack, onJoined, onHost })
           </p>
           {localMode && (
             <p className="mx-auto mt-3 max-w-xl rounded border border-line bg-gold-soft px-3 py-2 text-[0.8rem] font-semibold leading-snug text-ink-2">
-              <strong className="text-ink">Mode demo Vercel:</strong> buka tab pemain
-              lewat tombol <em>“Buka tab pemain”</em> di layar penyelenggara, di
-              browser yang sama. Jika tidak bisa, gunakan <em>“Tambah pemain demo”</em>{" "}
-              di layar penyelenggara.
+              <strong className="text-ink">Mode demo Vercel:</strong> mainkan di satu
+              layar. Buka mode penyelenggara, buat sesi, lalu tambahkan pemain demo di
+              sana. HP/browser lain membutuhkan backend.
             </p>
           )}
         </div>
@@ -151,6 +150,15 @@ export default function JoinPage({ initialCode = "", onBack, onJoined, onHost })
                   {error}
                 </div>
               )}
+
+              <button
+                type="button"
+                onClick={onHost}
+                className="mt-3 inline-flex w-full items-center justify-center gap-1 rounded border border-line bg-surface px-2 py-2 text-[0.8rem] font-bold text-ink-2 hover:border-ink"
+              >
+                <UserRound size={14} strokeWidth={3} aria-hidden="true" />
+                Buka mode penyelenggara di perangkat ini
+              </button>
 
               <Button
                 type="submit"
