@@ -337,7 +337,7 @@ MELAJAH AI bukan situs statis. Frontend React membutuhkan backend Express untuk:
 - menyimpan jawaban dan memanggil Juri AI,
 - menyimpan nilai manual dan hasil akhir.
 
-GitHub Pages, Netlify static, dan Vercel static hanya menyajikan HTML/JS. Jika hanya frontend yang di-deploy, halaman akan terbuka tetapi lobby, join, dadu, dan penilaian akan gagal karena `/api/...` tidak ada.
+GitHub Pages, Netlify static, dan Vercel static hanya menyajikan HTML/JS. Jika hanya frontend yang di-deploy, backend Express tidak berjalan. Pada Vercel, aplikasi otomatis beralih ke **mode demo lokal** (lihat di bawah) agar tetap bisa dicoba. Untuk permainan multi-perangkat penuh, backend Node tetap harus di-deploy.
 
 ### Render — disarankan (satu Node service)
 
@@ -370,6 +370,18 @@ docker run -p 4100:4100 --env-file .env melajah-ai
 ```
 
 Buka `http://localhost:4100`. Express menyajikan API dan `client/dist`.
+
+### Vercel — mode demo lokal otomatis
+
+Repo sudah menyertakan `vercel.json`. Jika Vercel hanya menjalankan frontend:
+
+- Semua state sesi disimpan di `localStorage` browser.
+- Bank soal tetap berfungsi; AI memakai penilaian kata kunci lokal.
+- Penyelenggara membuat sesi, lalu menekan **Buka tab pemain** untuk setiap pemain.
+- Pemain harus berada di **browser/perangkat yang sama**; kode/QR tidak dapat dipakai dari HP lain.
+- Materi sendiri dan AI server tidak tersedia di mode ini.
+
+Untuk pemain di perangkat berbeda, deploy backend Node (Render/Koyeb/Railway/VPS), lalu set `VITE_API_URL` di Vercel dan `CLIENT_ORIGIN` di backend.
 
 ### Frontend dan backend terpisah
 

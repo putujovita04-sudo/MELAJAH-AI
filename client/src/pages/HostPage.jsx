@@ -83,6 +83,14 @@ export default function HostPage({ onBack, onSessionCreated }) {
   const readyCount = sourceType === "bank" ? bankQuestions.length : generated?.questions.length ?? 0;
   const canContinue = sourceType === "bank" ? selectedCategories.length > 0 : Boolean(generated);
   const aiActive = Boolean(health?.ok && health?.aiEnabled);
+  const localMode = Boolean(health?.localMode);
+
+  useEffect(() => {
+    if (localMode && sourceType === "material") {
+      setSourceType("bank");
+      setError("Mode demo Vercel hanya mendukung bank soal.");
+    }
+  }, [localMode, sourceType]);
 
   const toggleCategory = (id) => {
     setSelectedCategories((current) =>
@@ -171,6 +179,14 @@ export default function HostPage({ onBack, onSessionCreated }) {
               Pilih bank soal budaya Bali atau buat soal baru dari materi pelajaranmu.
               Setelah sesi dibuat, bagikan kode atau QR kepada pemain.
             </p>
+            {localMode && (
+              <div className="mt-3 rounded border-2 border-ink bg-gold-soft p-3 text-[0.84rem] font-semibold leading-snug text-ink-2">
+                <strong className="text-ink">Mode demo Vercel.</strong> Backend tidak
+                terdeteksi, jadi sesi berjalan lokal di browser ini. Pemain harus
+                bergabung lewat tab di browser yang sama; materi sendiri tidak tersedia.
+                Untuk permainan multi-perangkat, deploy backend Node.
+              </div>
+            )}
           </div>
           <span
             className={cn(
@@ -187,7 +203,7 @@ export default function HostPage({ onBack, onSessionCreated }) {
               className={cn("h-2 w-2 rounded-full", aiActive ? "bg-teal" : "bg-[#B97A0B]")}
               aria-hidden="true"
             />
-            {aiActive ? "AI Juri aktif" : "Mode lokal aktif"}
+            {aiActive ? "AI Juri aktif" : localMode ? "Mode demo lokal" : "Mode lokal aktif"}
           </span>
         </div>
 
@@ -244,10 +260,14 @@ export default function HostPage({ onBack, onSessionCreated }) {
 
                 <button
                   type="button"
-                  onClick={() => setSourceType("material")}
+                  onClick={() => {
+                    if (!localMode) setSourceType("material");
+                  }}
                   aria-pressed={sourceType === "material"}
+                  disabled={localMode}
                   className={cn(
                     "rounded border-2 p-3 text-left transition",
+                    localMode && "cursor-not-allowed opacity-50",
                     sourceType === "material"
                       ? "border-ink bg-teal-soft shadow-[0_3px_0_var(--ink)]"
                       : "border-line bg-surface hover:border-ink/40",
@@ -267,7 +287,9 @@ export default function HostPage({ onBack, onSessionCreated }) {
                     Materi sendiri
                   </p>
                   <p className="mt-0.5 text-[0.8rem] font-semibold leading-snug text-ink-2">
-                    Unggah catatan atau ringkasan, lalu buat soal dari isinya.
+                    {localMode
+                      ? "Butuh backend Node. Di demo Vercel, gunakan bank soal."
+                      : "Unggah catatan atau ringkasan, lalu buat soal dari isinya."}
                   </p>
                 </button>
               </div>

@@ -12,6 +12,7 @@ import PageHeader from "../components/PageHeader";
 import Button from "../components/Button";
 import Pawn from "../components/Pawn";
 import { joinGameSession } from "../utils/sessionApi";
+import { getLocalMode } from "../utils/runtime";
 
 const sanitizeCode = (value) =>
   String(value ?? "")
@@ -26,6 +27,7 @@ export default function JoinPage({ initialCode = "", onBack, onJoined, onHost })
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const localMode = getLocalMode();
 
   useEffect(() => {
     setCode(sanitizeCode(initialCode));
@@ -73,6 +75,13 @@ export default function JoinPage({ initialCode = "", onBack, onJoined, onHost })
             Minta kode 5 huruf atau pindai QR dari penyelenggara. Setelah bergabung,
             kamu akan mendapat bidak dan menunggu giliran.
           </p>
+          {localMode && (
+            <p className="mx-auto mt-3 max-w-xl rounded border border-line bg-gold-soft px-3 py-2 text-[0.8rem] font-semibold leading-snug text-ink-2">
+              <strong className="text-ink">Mode demo Vercel:</strong> buka tab pemain
+              lewat tombol <em>“Buka tab pemain”</em> di layar penyelenggara, di
+              browser yang sama.
+            </p>
+          )}
         </div>
 
         <div className="mt-6 grid gap-4 md:grid-cols-[minmax(0,1fr)_340px] md:items-start">

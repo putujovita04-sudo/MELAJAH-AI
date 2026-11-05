@@ -214,6 +214,9 @@ export default function HostGamePage({ session, onHome, onNewSession }) {
               <Users size={13} strokeWidth={3} aria-hidden="true" /> {state.players.length}/{state.maxPlayers} pemain
             </span>
             <span className="chip bg-teal-soft">{TURN_LABEL[state.phase]}</span>
+            {state.localMode && (
+              <span className="chip hidden bg-gold-soft min-[560px]:inline-flex">Demo lokal</span>
+            )}
           </div>
         </div>
 
@@ -268,23 +271,49 @@ export default function HostGamePage({ session, onHome, onNewSession }) {
                       </button>
                     </div>
 
-                    <div className="mt-3 flex items-center justify-center rounded border border-line bg-surface p-2">
-                      <QRCodeSVG
-                        value={joinUrl}
-                        size={168}
-                        bgColor="#FFFDF8"
-                        fgColor="#2A1B12"
-                        level="M"
-                        title={`QR untuk bergabung ke sesi ${state.code}`}
-                      />
-                    </div>
-                    <p className="mt-1.5 break-all text-center text-[0.68rem] font-semibold text-ink-3">
-                      {joinUrl}
-                    </p>
-                    <p className="mt-2 text-[0.78rem] leading-snug text-ink-2">
-                      Pemain membuka tautan/QR, memasukkan nama panggilan, lalu menunggu
-                      penyelenggara memulai.
-                    </p>
+                    {state.localMode ? (
+                      <div className="mt-3 rounded border-2 border-ink bg-teal-soft p-3">
+                        <p className="font-display text-[1rem] font-bold leading-tight">
+                          Mode demo lokal
+                        </p>
+                        <p className="mt-1 text-[0.78rem] font-semibold leading-snug text-ink-2">
+                          Vercel tidak menjalankan backend. Pemain harus membuka tab
+                          di browser/perangkat yang sama dengan penyelenggara. Buka
+                          tab satu kali untuk setiap pemain.
+                        </p>
+                        <Button
+                          variant="teal"
+                          className="mt-2 w-full"
+                          icon={QrCode}
+                          onClick={() => window.open(joinUrl, "_blank", "noopener,noreferrer")}
+                        >
+                          Buka tab pemain
+                        </Button>
+                        <p className="mt-1.5 text-center text-[0.7rem] font-semibold text-ink-3">
+                          Ulangi tombol ini untuk pemain kedua.
+                        </p>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="mt-3 flex items-center justify-center rounded border border-line bg-surface p-2">
+                          <QRCodeSVG
+                            value={joinUrl}
+                            size={168}
+                            bgColor="#FFFDF8"
+                            fgColor="#2A1B12"
+                            level="M"
+                            title={`QR untuk bergabung ke sesi ${state.code}`}
+                          />
+                        </div>
+                        <p className="mt-1.5 break-all text-center text-[0.68rem] font-semibold text-ink-3">
+                          {joinUrl}
+                        </p>
+                        <p className="mt-2 text-[0.78rem] leading-snug text-ink-2">
+                          Pemain membuka tautan/QR, memasukkan nama panggilan, lalu menunggu
+                          penyelenggara memulai.
+                        </p>
+                      </>
+                    )}
                   </div>
                   <div className="poleng h-2.5" aria-hidden="true" />
                 </section>
@@ -364,14 +393,14 @@ export default function HostGamePage({ session, onHome, onNewSession }) {
                     variant="primary"
                     className="mt-3 w-full"
                     icon={busy ? Loader2 : Play}
-                    disabled={busy || state.players.length < 2}
+                    disabled={busy || state.players.length < (state.minPlayers ?? 2)}
                     onClick={() => run(() => startGameSession(code, hostToken))}
                   >
                     {busy ? "Memproses..." : "Mulai permainan"}
                   </Button>
-                  {state.players.length < 2 && (
+                  {state.players.length < (state.minPlayers ?? 2) && (
                     <p className="mt-1.5 text-center text-[0.74rem] font-semibold text-ink-3">
-                      Minimal 2 pemain untuk memulai.
+                      Minimal {state.minPlayers ?? 2} pemain untuk memulai.
                     </p>
                   )}
                   <p className="mt-2 text-center text-[0.72rem] font-semibold text-ink-3">
