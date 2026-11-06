@@ -88,9 +88,9 @@ export default function LandingPage({ onStart, onHost, onHowTo }) {
             </h1>
 
             <p className="lead mt-5">
-              Bergabung dengan kode, jalan di peta 10×10, dan jawab soal tentang tari,
-              upacara, makanan, pakaian, serta tempat khas Bali. Juri AI akan memberi
-              nilai ramah untuk setiap jawabanmu.
+              Yuk, ikut bermain! Cukup masukkan kode dari penyelenggara, lalu jawab soal
+              menarik tentang tari, upacara, makanan, pakaian, dan tempat khas Bali. Juri
+              AI siap memberi nilai dengan ramah untuk setiap jawabanmu.
             </p>
 
             <div className="mt-6 flex flex-col gap-2.5 sm:flex-row">
