@@ -225,6 +225,9 @@ export default function HostGamePage({ session, onHome, onNewSession }) {
               <Users size={13} strokeWidth={3} aria-hidden="true" /> {state.players.length}/{state.maxPlayers} pemain
             </span>
             <span className="chip bg-teal-soft">{TURN_LABEL[state.phase]}</span>
+            {state.sourceLabel === "Materi sendiri" && (
+              <span className="chip bg-teal-soft">Materi sendiri</span>
+            )}
             {state.localMode && (
               <span className="chip hidden bg-gold-soft min-[560px]:inline-flex">Demo lokal</span>
             )}
@@ -337,16 +340,16 @@ export default function HostGamePage({ session, onHome, onNewSession }) {
                       </Button>
                       <p className="mb-2 rounded border border-line bg-surface px-2 py-1.5 text-[0.68rem] font-semibold leading-snug text-ink-3">
                         Kode hanya berlaku di browser/perangkat ini. Jangan buka di HP
-                        atau browser lain; untuk itu perlu backend.
+                        atau browser lain; untuk itu perlu room server (Upstash Redis).
                       </p>
                     </>
                   )}
                   {state.localMode && (
                     <div className="mb-2 rounded border-2 border-ink bg-gold-soft p-2.5 text-[0.78rem] font-semibold leading-snug text-ink-2">
-                      <strong className="text-ink">Mode demo satu layar.</strong> Vercel
-                      tidak menjalankan backend. Tambahkan pemain di bawah, lalu mulai.
-                      Jawaban dicatat lewat panel penyelenggara. HP/browser lain
-                      membutuhkan backend.
+                      <strong className="text-ink">Mode demo satu layar.</strong> Sesi ini
+                      hanya ada di browser ini. Tambahkan pemain di bawah, lalu mulai.
+                      Jawaban dinilai dengan kata kunci lokal. Untuk pemain di HP,
+                      aktifkan room server (Upstash Redis).
                     </div>
                   )}
                   <div className="flex items-center justify-between gap-2">

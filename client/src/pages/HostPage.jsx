@@ -85,13 +85,6 @@ export default function HostPage({ onBack, onSessionCreated }) {
   const aiActive = Boolean(health?.ok && health?.aiEnabled);
   const localMode = Boolean(health?.localMode);
 
-  useEffect(() => {
-    if (localMode && sourceType === "material") {
-      setSourceType("bank");
-      setError("Mode demo Vercel hanya mendukung bank soal.");
-    }
-  }, [localMode, sourceType]);
-
   const toggleCategory = (id) => {
     setSelectedCategories((current) =>
       current.includes(id) ? current.filter((item) => item !== id) : [...current, id],
@@ -154,7 +147,11 @@ export default function HostPage({ onBack, onSessionCreated }) {
       const payload =
         sourceType === "bank"
           ? { maxPlayers, categories: selectedCategories, difficulty: "sedang" }
-          : { maxPlayers, materialId: generated.materialId };
+          : {
+              maxPlayers,
+              materialId: generated.materialId,
+              materialQuestions: generated.questions,
+            };
       const result = await createGameSession(payload);
       onSessionCreated(result);
     } catch (requestError) {
@@ -177,15 +174,15 @@ export default function HostPage({ onBack, onSessionCreated }) {
             <h1 className="h2-display mt-2">Siapkan soal, lalu main bersama</h1>
             <p className="lead mt-2 text-[1rem]">
               {localMode
-                ? "Pilih bank soal. Setelah sesi demo dibuat, tambahkan pemain langsung di layar penyelenggara."
+                ? "Pilih bank soal atau materi sendiri. Setelah sesi demo dibuat, tambahkan pemain langsung di layar penyelenggara."
                 : "Pilih bank soal budaya Bali atau buat soal baru dari materi pelajaranmu. Setelah sesi dibuat, bagikan kode atau QR kepada pemain."}
             </p>
             {localMode && (
               <div className="mt-3 rounded border-2 border-ink bg-gold-soft p-3 text-[0.84rem] font-semibold leading-snug text-ink-2">
-                <strong className="text-ink">Mode demo Vercel.</strong> Backend tidak
-                terdeteksi, jadi sesi berjalan lokal di browser ini. Kamu bisa
-                menambahkan pemain demo langsung dari layar penyelenggara. Untuk
-                permainan multi-perangkat, aktifkan backend (Vercel + Upstash Redis).
+                <strong className="text-ink">Mode demo Vercel.</strong> Sesi berjalan lokal
+                di browser ini; materi sendiri tetap diproses di server. Kamu bisa
+                menambahkan pemain demo langsung dari layar penyelenggara. Untuk room
+                multi-perangkat, aktifkan Upstash Redis.
               </div>
             )}
             {!localMode && health && health.serverless && health.sharedStore === false && (
@@ -270,14 +267,10 @@ export default function HostPage({ onBack, onSessionCreated }) {
 
                 <button
                   type="button"
-                  onClick={() => {
-                    if (!localMode) setSourceType("material");
-                  }}
+                  onClick={() => setSourceType("material")}
                   aria-pressed={sourceType === "material"}
-                  disabled={localMode}
                   className={cn(
                     "rounded border-2 p-3 text-left transition",
-                    localMode && "cursor-not-allowed opacity-50",
                     sourceType === "material"
                       ? "border-ink bg-teal-soft shadow-[0_3px_0_var(--ink)]"
                       : "border-line bg-surface hover:border-ink/40",
@@ -297,9 +290,8 @@ export default function HostPage({ onBack, onSessionCreated }) {
                     Materi sendiri
                   </p>
                   <p className="mt-0.5 text-[0.8rem] font-semibold leading-snug text-ink-2">
-                    {localMode
-                      ? "Butuh backend Node. Di demo Vercel, gunakan bank soal."
-                      : "Unggah catatan atau ringkasan, lalu buat soal dari isinya."}
+                    Unggah catatan atau ringkasan, lalu buat soal dari isinya.
+                    {localMode ? " Soal dinilai dengan kata kunci lokal." : ""}
                   </p>
                 </button>
               </div>

@@ -1,6 +1,6 @@
 const API_BASE = import.meta.env.VITE_API_URL ?? "";
 
-import { getLocalMode, setLocalMode } from "./runtime";
+import { setLocalMode } from "./runtime";
 
 const parseJson = async (response) => {
   try {
@@ -36,11 +36,6 @@ export const getServerHealth = async () => {
  * untuk pratinjau.
  */
 export const generateMaterialQuestions = async (file) => {
-  if (getLocalMode()) {
-    throw new Error(
-      "Mode demo Vercel hanya mendukung bank soal. Untuk materi sendiri, deploy backend Node terlebih dahulu.",
-    );
-  }
   const form = new FormData();
   form.append("file", file);
 
@@ -53,9 +48,8 @@ export const generateMaterialQuestions = async (file) => {
 
     const data = await parseJson(response);
     if (data === null) {
-      setLocalMode(true);
       throw new Error(
-        "Deployment ini tidak memiliki backend. Mode demo hanya mendukung bank soal.",
+        "Server materi tidak aktif di alamat ini. Coba lagi nanti.",
       );
     }
     if (!response.ok || !Array.isArray(data?.questions)) {
@@ -69,9 +63,8 @@ export const generateMaterialQuestions = async (file) => {
       error.name === "AbortError" ||
       /fetch|network|load|aborted|timeout/i.test(error.message ?? "")
     ) {
-      setLocalMode(true);
       throw new Error(
-        "Backend tidak tersedia. Di Vercel, gunakan bank soal (mode demo lokal).",
+        "Tidak bisa menghubungi server untuk membuat soal. Periksa koneksi lalu coba lagi.",
       );
     }
     throw error;

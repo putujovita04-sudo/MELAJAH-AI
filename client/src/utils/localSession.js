@@ -148,6 +148,28 @@ const prepareQuestions = ({ categories, difficulty }) => {
   }));
 };
 
+const prepareMaterialQuestions = (items) =>
+  shuffle(
+    items
+      .filter((question) => question && question.question && question.answer)
+      .map((question, index) => ({
+        ...question,
+        id: question.id || `mat-local-${index + 1}`,
+        category: question.category || "materi",
+        categoryLabel: question.categoryLabel || "Materi Sendiri",
+        options:
+          Array.isArray(question.options) && question.options.length > 0
+            ? shuffle([...question.options])
+            : undefined,
+        keywords:
+          Array.isArray(question.keywords) && question.keywords.length > 0
+            ? [...question.keywords]
+            : [question.answer],
+        explanation:
+          question.explanation || `Jawaban yang tepat adalah ${question.answer}.`,
+      })),
+  );
+
 const evaluateLocal = (question, answer) => {
   const safe = String(answer ?? "").trim();
   if (question.type === "pilihan") {
@@ -411,18 +433,34 @@ const maybeFinalize = (session) => {
 const hostState = (session) => ({ state: serialize(session, true) });
 const publicState = (session) => ({ state: serialize(session) });
 
-export const createLocalSession = ({ maxPlayers, materialId, categories, difficulty }) => {
-  if (materialId) {
-    throw new Error(
-      "Mode demo Vercel hanya mendukung bank soal. Untuk materi sendiri, deploy backend Node.",
-    );
-  }
+export const createLocalSession = ({
+  maxPlayers,
+  materialId,
+  materialQuestions,
+  categories,
+  difficulty,
+}) => {
   const limit = Number(maxPlayers);
   if (![2, 3, 4].includes(limit)) {
     throw new Error("Jumlah pemain harus 2–4.");
   }
-  const questions = prepareQuestions({ categories, difficulty });
-  if (questions.length < 5) throw new Error("Bank soal tidak cukup untuk sesi ini.");
+
+  const hasMaterial = Array.isArray(materialQuestions) && materialQuestions.length > 0;
+  if (materialId && !hasMaterial) {
+    throw new Error("Soal materi tidak ditemukan. Buat soal lagi, ya.");
+  }
+
+  const questions = hasMaterial
+    ? prepareMaterialQuestions(materialQuestions)
+    : prepareQuestions({ categories, difficulty });
+  const minimum = hasMaterial ? 3 : 5;
+  if (questions.length < minimum) {
+    throw new Error(
+      hasMaterial
+        ? "Materi tidak memiliki cukup soal untuk sesi ini."
+        : "Bank soal tidak cukup untuk sesi ini.",
+    );
+  }
 
   const session = {
     localMode: true,
@@ -431,7 +469,7 @@ export const createLocalSession = ({ maxPlayers, materialId, categories, difficu
     createdAt: Date.now(),
     updatedAt: Date.now(),
     maxPlayers: limit,
-    sourceLabel: "Bank soal budaya Bali",
+    sourceLabel: hasMaterial ? "Materi sendiri" : "Bank soal budaya Bali",
     board: createBoardLayout(),
     questions,
     deck: shuffle(questions.map((question) => question.id)),
@@ -457,7 +495,11 @@ export const createLocalSession = ({ maxPlayers, materialId, categories, difficu
     log: [],
     notice: "Mode demo lokal: bagikan kode ke tab pemain di browser ini.",
   };
-  addLog(session, "Sesi demo lokal dibuat. Pemain harus membuka tab di browser yang sama.", "teal");
+  addLog(
+    session,
+    `Sesi demo lokal dibuat dari ${hasMaterial ? "materi sendiri" : "bank soal"}.`,
+    "teal",
+  );
   saveSession(session);
   return {
     code: session.code,
