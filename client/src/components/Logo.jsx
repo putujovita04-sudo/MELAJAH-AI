@@ -5,23 +5,17 @@ export default function Logo({ className = "", showTagline = false, compact = fa
     <div className={cn("flex items-center gap-2.5", className)}>
       <span
         className={cn(
-          "relative grid shrink-0 place-items-center rounded border-2 border-ink bg-gold",
-          compact ? "h-10 w-10" : "h-12 w-12",
+          "relative shrink-0 overflow-hidden rounded border-2 border-ink bg-[#FBF8F0]",
+          compact ? "h-11 w-11" : "h-14 w-14",
         )}
         aria-hidden="true"
       >
-        <svg viewBox="0 0 32 32" className={compact ? "h-6 w-6" : "h-7 w-7"}>
-          <path
-            d="M5 27h22M8 27V14l8-7 8 7v13"
-            fill="none"
-            stroke="#2A1B12"
-            strokeWidth="2.4"
-            strokeLinejoin="round"
-          />
-          <path d="M13 27v-7h6v7" fill="#C8401F" stroke="#2A1B12" strokeWidth="2" />
-          <path d="M16 3v5M12 10h8" stroke="#2A1B12" strokeWidth="2" strokeLinecap="round" />
-          <circle cx="25" cy="8" r="3.4" fill="#FFF6E6" stroke="#2A1B12" strokeWidth="1.8" />
-        </svg>
+        <img
+          src="/brand/logo-mark.jpg"
+          alt=""
+          className="h-full w-full scale-[1.04] object-cover"
+          draggable="false"
+        />
       </span>
       <span className="leading-none">
         <span
@@ -42,7 +36,7 @@ export default function Logo({ className = "", showTagline = false, compact = fa
         </span>
         {showTagline && (
           <span className="mt-1 hidden text-[0.68rem] font-bold uppercase tracking-[0.14em] text-ink-2 sm:block">
-            Belajar budaya Bali sambil bermain
+            Menjawab budaya. Menciptakan masa depan.
           </span>
         )}
       </span>
