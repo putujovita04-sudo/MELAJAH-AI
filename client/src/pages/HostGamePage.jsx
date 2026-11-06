@@ -307,6 +307,41 @@ export default function HostGamePage({ session, onHome, onNewSession }) {
 
                 <section className="panel-soft p-3" aria-labelledby="lobby-players-title">
                   {state.localMode && (
+                    <>
+                      <div className="mb-2 flex items-center justify-between gap-2 rounded border-2 border-ink bg-gold-soft p-2.5">
+                        <div>
+                          <p className="text-[0.6rem] font-extrabold uppercase tracking-[0.12em] text-ink-2">
+                            Kode sesi demo
+                          </p>
+                          <p className="font-display text-[1.7rem] font-extrabold leading-none tracking-[0.14em]">
+                            {state.code}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={copyCode}
+                          className="inline-flex items-center gap-1 rounded border border-line bg-surface px-2 py-1 text-[0.7rem] font-bold text-ink-2 hover:border-ink"
+                        >
+                          {copied ? <Check size={12} strokeWidth={3} /> : <Clipboard size={12} strokeWidth={3} />}
+                          {copied ? "Tersalin" : "Salin"}
+                        </button>
+                      </div>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="mb-2 w-full"
+                        icon={QrCode}
+                        onClick={() => window.open(joinUrl, "_blank", "noopener,noreferrer")}
+                      >
+                        Buka tab pemain (browser ini)
+                      </Button>
+                      <p className="mb-2 rounded border border-line bg-surface px-2 py-1.5 text-[0.68rem] font-semibold leading-snug text-ink-3">
+                        Kode hanya berlaku di browser/perangkat ini. Jangan buka di HP
+                        atau browser lain; untuk itu perlu backend.
+                      </p>
+                    </>
+                  )}
+                  {state.localMode && (
                     <div className="mb-2 rounded border-2 border-ink bg-gold-soft p-2.5 text-[0.78rem] font-semibold leading-snug text-ink-2">
                       <strong className="text-ink">Mode demo satu layar.</strong> Vercel
                       tidak menjalankan backend. Tambahkan pemain di bawah, lalu mulai.
