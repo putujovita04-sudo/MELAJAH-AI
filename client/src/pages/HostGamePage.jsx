@@ -246,7 +246,7 @@ export default function HostGamePage({ session, onHome, onNewSession }) {
           <section className="order-2 lg:order-1" aria-label="Papan permainan">
             <div
               className="mx-auto w-full transition-[max-width] duration-200"
-              style={{ maxWidth: questionPanelOpen ? "min(100%, 58svh)" : "min(100%, 70svh)" }}
+              style={{ maxWidth: questionPanelOpen ? "min(100%, 72svh)" : "min(100%, 84svh)" }}
             >
               {active && <div className="mb-2"><HostNotice game={state} /></div>}
               <Board
