@@ -1,4 +1,4 @@
-import { ArrowRight, ClipboardPenLine, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowRight, ClipboardPenLine, Sparkles } from "lucide-react";
 import PageHeader from "../components/PageHeader";
 import Logo from "../components/Logo";
 
@@ -68,12 +68,8 @@ export default function StartPage({ onBack, onHost, onHowTo }) {
           </button>
         </div>
 
-        <div className="mt-5 flex flex-col items-center justify-between gap-3 rounded border border-line bg-surface/80 px-4 py-3 sm:flex-row">
-          <p className="flex items-center gap-2 text-[0.82rem] font-semibold text-ink-2">
-            <ShieldCheck size={18} strokeWidth={2.6} className="shrink-0 text-teal" aria-hidden="true" />
-            Tidak perlu akun dan tidak ada data pribadi. Cukup nama panggilan.
-          </p>
-          <button type="button" onClick={onHowTo} className="link-underline shrink-0 text-[0.85rem] font-bold">
+        <div className="mt-5 flex justify-center rounded border border-line bg-surface/80 px-4 py-3">
+          <button type="button" onClick={onHowTo} className="link-underline text-[0.85rem] font-bold">
             Baca cara bermain
           </button>
         </div>
