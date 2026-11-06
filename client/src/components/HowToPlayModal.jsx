@@ -22,7 +22,7 @@ const STEPS = [
   {
     icon: MessageCircleQuestion,
     title: "Jawab soal",
-    text: "Berhenti di petak soal? Jawab pertanyaan; Juri AI menilai maknanya.",
+    text: "Berhenti di petak soal? Jawab pertanyaan; jawabanmu akan dinilai dengan ramah.",
   },
   {
     icon: Sparkles,

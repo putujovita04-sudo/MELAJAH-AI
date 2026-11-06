@@ -88,9 +88,8 @@ export default function LandingPage({ onStart, onHost, onHowTo }) {
             </h1>
 
             <p className="lead mt-5">
-              Yuk, ikut bermain! Cukup masukkan kode dari penyelenggara, lalu jawab soal
-              menarik tentang tari, upacara, makanan, pakaian, dan tempat khas Bali. Juri
-              AI siap memberi nilai dengan ramah untuk setiap jawabanmu.
+              Yuk, ikut bermain! Jawab soal menarik tentang tari, upacara, makanan,
+              pakaian, dan tempat khas Bali. Setiap jawabanmu akan dinilai dengan ramah.
             </p>
 
             <div className="mt-6 flex flex-col gap-2.5 sm:flex-row">
@@ -102,7 +101,7 @@ export default function LandingPage({ onStart, onHost, onHowTo }) {
               </Button>
             </div>
 
-            <dl className="mt-7 grid max-w-md grid-cols-3 gap-3 border-t-2 border-dashed border-line pt-4">
+            <dl className="mt-7 grid max-w-md grid-cols-2 gap-3 border-t-2 border-dashed border-line pt-4">
               <div>
                 <dt className="text-[0.66rem] font-extrabold uppercase tracking-[0.12em] text-ink-2">
                   Soal
@@ -115,21 +114,12 @@ export default function LandingPage({ onStart, onHost, onHowTo }) {
                 </dt>
                 <dd className="font-display text-[1.55rem] font-bold leading-none">5</dd>
               </div>
-              <div>
-                <dt className="text-[0.66rem] font-extrabold uppercase tracking-[0.12em] text-ink-2">
-                  Juri
-                </dt>
-                <dd className="font-display text-[1.55rem] font-bold leading-none">AI</dd>
-              </div>
             </dl>
           </div>
 
           <div className="relative mx-auto w-full max-w-[560px]">
             <div className="absolute -left-2 top-10 z-20 hidden rotate-[-8deg] rounded border-2 border-ink bg-surface px-2.5 py-1 text-[0.68rem] font-extrabold uppercase tracking-wide shadow-sticker sm:block">
               15 tangga · 15 ular
-            </div>
-            <div className="absolute -right-2 top-4 z-20 rotate-6 rounded border-2 border-ink bg-teal px-2.5 py-1 text-[0.68rem] font-extrabold uppercase tracking-wide text-surface shadow-sticker">
-              AI Juri ramah
             </div>
             <motion.div
               initial={{ opacity: 0, y: 18, rotate: 1.5 }}
@@ -141,7 +131,6 @@ export default function LandingPage({ onStart, onHost, onHowTo }) {
                 <span className="inline-flex items-center gap-1.5 text-[0.68rem] font-extrabold uppercase tracking-[0.12em] text-ink-2">
                   <LayoutGrid size={13} strokeWidth={3} aria-hidden="true" /> Peta petualangan
                 </span>
-                <span className="chip !border-ink/15 bg-gold-soft !text-[0.62rem]">10 × 10 · 100 petak</span>
               </div>
               <BalineseScene />
             </motion.div>
@@ -161,9 +150,6 @@ export default function LandingPage({ onStart, onHost, onHowTo }) {
                 Yang akan kamu temukan
               </h2>
             </div>
-            <p className="max-w-sm text-[0.9rem] font-semibold text-ink-2">
-              Soal diacak setiap permainan, jadi tidak selalu muncul pertanyaan yang sama.
-            </p>
           </div>
 
           <div className="mt-5 grid grid-cols-2 gap-2.5 md:grid-cols-5">
