@@ -23,6 +23,15 @@ export const getMaterial = (materialId) => {
   return store.get(materialId) ?? null;
 };
 
+/** Dipakai saat memuat materi dari shared store (serverless). */
+export const putMaterial = (materialId, record) => {
+  if (!materialId || !record) return null;
+  store.set(materialId, record);
+  return record;
+};
+
+export const hasMaterial = (materialId) => Boolean(materialId && store.has(materialId));
+
 export const getMaterialQuestion = (materialId, questionId) => {
   const material = getMaterial(materialId);
   if (!material) return null;

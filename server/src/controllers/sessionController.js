@@ -75,11 +75,11 @@ export const giveDiceHandler = (req, res, next) => {
   }
 };
 
-export const submitAnswerHandler = (req, res, next) => {
+export const submitAnswerHandler = async (req, res, next) => {
   try {
     const { playerId, playerToken, answer } = req.body ?? {};
     res.json({
-      state: submitAnswer(codeFrom(req), { playerId, playerToken, answer }),
+      state: await submitAnswer(codeFrom(req), { playerId, playerToken, answer }),
     });
   } catch (error) {
     next(error);

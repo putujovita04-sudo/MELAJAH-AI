@@ -22,3 +22,8 @@ services:
         value: "21600000"
       - key: VERDICT_AUTO_MS
         value: "10000"
+      # Opsional: aktifkan shared store agar aman multi-instance.
+      - key: UPSTASH_REDIS_REST_URL
+        sync: false
+      - key: UPSTASH_REDIS_REST_TOKEN
+        sync: false

@@ -95,7 +95,7 @@ export default function LandingPage({ onStart, onHost, onHowTo }) {
 
             <div className="mt-6 flex flex-col gap-2.5 sm:flex-row">
               <Button variant="primary" icon={Play} onClick={onStart} className="text-[1.28rem]">
-                Mulai bermain
+                Mulai demo
               </Button>
               <Button variant="secondary" icon={BookOpen} onClick={onHowTo}>
                 Cara bermain

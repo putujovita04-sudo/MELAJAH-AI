@@ -67,11 +67,6 @@ export default function App() {
     setScreen("landing");
   };
 
-  const openJoin = () => {
-    setJoinCode("");
-    setScreen("join");
-  };
-
   const openHostSetup = () => {
     setScreen("host-setup");
   };
@@ -142,7 +137,6 @@ export default function App() {
       {screen === "start" && (
         <StartPage
           onBack={goHome}
-          onPlayer={openJoin}
           onHost={openHostSetup}
           onHowTo={() => setHowToOpen(true)}
         />

@@ -18,8 +18,12 @@ export const getServerHealth = async () => {
     if (!response.ok) throw new Error("Server tidak merespons");
     const data = await response.json();
     const serverAvailable = Boolean(data?.ok && data?.service === "melajah-ai");
-    setLocalMode(!serverAvailable);
-    return { ...data, localMode: !serverAvailable };
+    // Di Vercel tanpa Upstash, room lintas perangkat tidak aktif. Perlakukan
+    // sebagai mode demo supaya penyelenggara tetap bisa mencoba permainan.
+    const sharedStoreMissing = Boolean(data?.serverless && data?.sharedStore === false);
+    const localMode = !serverAvailable || sharedStoreMissing;
+    setLocalMode(localMode);
+    return { ...data, localMode };
   } catch {
     setLocalMode(true);
     return { ok: false, aiEnabled: false, localMode: true };

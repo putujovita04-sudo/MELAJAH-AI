@@ -30,6 +30,7 @@ import {
   saveSession,
   touchSession,
 } from "./sessionStore.js";
+import { isSharedStoreEnabled } from "./redisStore.js";
 
 const fail = (status, message) => {
   const error = new Error(message);
@@ -226,6 +227,12 @@ const serialize = (session, { host = false } = {}) => {
 
 const scheduleVerdict = (session) => {
   clearTimers(session);
+  session.autoAdvanceAt = Date.now() + ENV.verdictAutoMs;
+
+  // Di serverless, timer proses tidak bisa diandalkan: instance bisa mati
+  // setelah request. Resolusi otomatis dilakukan lazy saat state dibaca.
+  if (isSharedStoreEnabled()) return;
+
   const timer = setTimeout(() => {
     const live = getSession(session.code);
     if (live && live.phase === "verdict") {
@@ -234,7 +241,6 @@ const scheduleVerdict = (session) => {
   }, ENV.verdictAutoMs);
   timer.unref?.();
   session.verdictTimer = timer;
-  session.autoAdvanceAt = Date.now() + ENV.verdictAutoMs;
 };
 
 const advanceTurn = (session) => {
@@ -576,7 +582,54 @@ export const giveDice = (code, token, rawValue) => {
   return serialize(session, { host: true });
 };
 
-export const submitAnswer = (code, { playerId, playerToken, answer }) => {
+const applyJudgeSuccess = (live, { player, safeAnswer, question, result }) => {
+  if (!live || live.phase !== "judging") return;
+  const outcome = getOutcome(result.skor);
+  live.verdict = {
+    playerId: player.id,
+    playerName: player.name,
+    skor: clampScore(result.skor),
+    komentar: sanitizeComment(result.komentar),
+    source: result.source,
+    answer: safeAnswer,
+    kunci: result.kunci ?? question.answer,
+    penjelasan: result.penjelasan ?? question.explanation ?? "",
+    outcome: outcome.id,
+    at: Date.now(),
+  };
+  live.phase = "verdict";
+  live.notice = `${player.name} mendapat skor ${live.verdict.skor}. Penyelenggara dapat meninjau hasil.`;
+  addLog(
+    live,
+    `${player.name} mendapat skor ${live.verdict.skor} (${outcome.label}).`,
+    outcome.tone,
+  );
+  scheduleVerdict(live);
+};
+
+const applyJudgeFailure = (live, { player, safeAnswer, question, error }) => {
+  if (!live || live.phase !== "judging") return;
+  live.verdict = {
+    playerId: player.id,
+    playerName: player.name,
+    skor: 0,
+    komentar:
+      "Penilaian otomatis sedang bermasalah. Penyelenggara dapat memberi nilai manual.",
+    source: "manual",
+    answer: safeAnswer,
+    kunci: question.answer,
+    penjelasan: question.explanation ?? "",
+    outcome: "wrong",
+    at: Date.now(),
+  };
+  live.phase = "verdict";
+  live.notice = "Penilaian AI gagal. Penyelenggara dapat memberi nilai manual.";
+  addLog(live, live.notice, "accent");
+  scheduleVerdict(live);
+  console.warn("[MELAJAH] Penilaian gagal:", error.code ?? error.message);
+};
+
+export const submitAnswer = async (code, { playerId, playerToken, answer }) => {
   const session = requireSession(code);
   if (session.phase !== "question") {
     throw fail(409, "Tidak ada pertanyaan yang menunggu jawaban.");
@@ -604,55 +657,22 @@ export const submitAnswer = (code, { playerId, playerToken, answer }) => {
   addLog(session, `${player.name} mengirim jawaban.`, "sky");
 
   const sessionCode = session.code;
+  const context = { player, safeAnswer, question };
 
-  judgeQuestion(question, safeAnswer)
-    .then((result) => {
-      const live = getSession(sessionCode);
-      if (!live || live.phase !== "judging") return;
-      const outcome = getOutcome(result.skor);
-      live.verdict = {
-        playerId: player.id,
-        playerName: player.name,
-        skor: clampScore(result.skor),
-        komentar: sanitizeComment(result.komentar),
-        source: result.source,
-        answer: safeAnswer,
-        kunci: result.kunci ?? question.answer,
-        penjelasan: result.penjelasan ?? question.explanation ?? "",
-        outcome: outcome.id,
-        at: Date.now(),
-      };
-      live.phase = "verdict";
-      live.notice = `${player.name} mendapat skor ${live.verdict.skor}. Penyelenggara dapat meninjau hasil.`;
-      addLog(
-        live,
-        `${player.name} mendapat skor ${live.verdict.skor} (${outcome.label}).`,
-        outcome.tone,
-      );
-      scheduleVerdict(live);
-    })
-    .catch((error) => {
-      const live = getSession(sessionCode);
-      if (!live || live.phase !== "judging") return;
-      live.verdict = {
-        playerId: player.id,
-        playerName: player.name,
-        skor: 0,
-        komentar:
-          "Penilaian otomatis sedang bermasalah. Penyelenggara dapat memberi nilai manual.",
-        source: "manual",
-        answer: safeAnswer,
-        kunci: question.answer,
-        penjelasan: question.explanation ?? "",
-        outcome: "wrong",
-        at: Date.now(),
-      };
-      live.phase = "verdict";
-      live.notice = "Penilaian AI gagal. Penyelenggara dapat memberi nilai manual.";
-      addLog(live, live.notice, "accent");
-      scheduleVerdict(live);
-      console.warn("[MELAJAH] Penilaian gagal:", error.code ?? error.message);
-    });
+  if (isSharedStoreEnabled()) {
+    // Serverless: selesaikan penilaian sebelum response, supaya hasilnya
+    // ikut tersimpan ke shared store dalam request yang sama.
+    try {
+      const result = await judgeQuestion(question, safeAnswer);
+      applyJudgeSuccess(getSession(sessionCode), { ...context, result });
+    } catch (error) {
+      applyJudgeFailure(getSession(sessionCode), { ...context, error });
+    }
+  } else {
+    judgeQuestion(question, safeAnswer)
+      .then((result) => applyJudgeSuccess(getSession(sessionCode), { ...context, result }))
+      .catch((error) => applyJudgeFailure(getSession(sessionCode), { ...context, error }));
+  }
 
   return serialize(session);
 };
@@ -715,6 +735,18 @@ export const resolveVerdict = (code, token) => {
   }
   resolveVerdictInternal(session);
   return serialize(session, { host: true });
+};
+
+/**
+ * Dipakai serverless: menggantikan setTimeout yang tidak tahan antar-request.
+ * Mengembalikan true kalau ada perubahan yang perlu disimpan.
+ */
+export const resolveDueVerdict = (code) => {
+  const session = getSession(code);
+  if (!session || session.phase !== "verdict" || !session.autoAdvanceAt) return false;
+  if (Date.now() < session.autoAdvanceAt) return false;
+  resolveVerdictInternal(session);
+  return true;
 };
 
 export const endSession = (code, token) => {

@@ -52,6 +52,40 @@ export const getSession = (code) => {
   return session;
 };
 
+/**
+ * Menaruh sesi yang dibaca dari shared store ke cache proses.
+ * Timer lama (kalau ada) dibersihkan agar tidak dobel dengan data baru.
+ */
+export const putSession = (session) => {
+  if (!session?.code) return null;
+  const normalized = normalizeCode(session.code);
+  const previous = sessions.get(normalized);
+  if (previous && previous !== session) clearTimers(previous);
+  clearTimers(session);
+  sessions.delete(normalized);
+  sessions.set(normalized, session);
+  return session;
+};
+
+/** Membuang cache lokal supaya permintaan berikutnya membaca ulang dari store. */
+export const forgetSession = (code) => {
+  const normalized = normalizeCode(code);
+  const session = sessions.get(normalized);
+  if (!session) return false;
+  clearTimers(session);
+  sessions.delete(normalized);
+  return true;
+};
+
+/** Salinan siap-JSON: timer tidak bisa diserialisasi. */
+export const snapshotSession = (session) => {
+  if (!session) return null;
+  const { verdictTimer, ...rest } = session;
+  return rest;
+};
+
+export const hasSession = (code) => sessions.has(normalizeCode(code));
+
 export const touchSession = (session) => {
   if (session) session.updatedAt = Date.now();
   return session;

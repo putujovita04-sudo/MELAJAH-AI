@@ -337,7 +337,22 @@ MELAJAH AI bukan situs statis. Frontend React membutuhkan backend Express untuk:
 - menyimpan jawaban dan memanggil Juri AI,
 - menyimpan nilai manual dan hasil akhir.
 
-GitHub Pages, Netlify static, dan Vercel static hanya menyajikan HTML/JS. Jika hanya frontend yang di-deploy, backend Express tidak berjalan. Pada Vercel, aplikasi otomatis beralih ke **mode demo lokal** (lihat di bawah) agar tetap bisa dicoba. Untuk permainan multi-perangkat penuh, backend Node tetap harus di-deploy.
+GitHub Pages, Netlify static, dan Vercel static (tanpa function) hanya menyajikan HTML/JS. Jika hanya frontend yang di-deploy, backend Express tidak berjalan. Aplikasi lalu beralih ke **mode demo lokal** (satu browser) agar tetap bisa dicoba. Untuk permainan multi-perangkat, gunakan **Vercel + Upstash Redis** atau deploy backend Node.
+
+### Vercel + Upstash Redis — disarankan untuk room lintas HP
+
+Repo menyertakan `api/index.js` (Vercel Function) dan `vercel.json` yang meneruskan `/api/*` ke Express. State room disimpan di Upstash Redis, jadi penyelenggara dan pemain di HP berbeda melihat room yang sama.
+
+1. Buka project Vercel → **Storage** (atau Marketplace) → **Upstash Redis** → buat database gratis.
+2. Hubungkan database ke project Vercel. Yang dipakai server:
+   - `UPSTASH_REDIS_REST_URL`
+   - `UPSTASH_REDIS_REST_TOKEN`
+   - (Vercel KV juga didukung lewat `KV_REST_API_URL` / `KV_REST_API_TOKEN`.)
+3. **Redeploy** project setelah env ditambahkan.
+4. Cek `https://domain-anda/api/health`. Respons harus JSON dengan `"sharedStore": true`.
+5. Penyelenggara membuat sesi, lalu pemain membuka link/QR dan memasukkan kode 5 huruf.
+
+Jika Upstash belum terhubung, `POST /api/sessions` akan menjawab 503 dengan pesan yang jelas (tidak lagi diam-diam membuat room lokal). Mode demo satu layar tetap tersedia lewat fallback lokal bila API tidak bisa dihubungi.
 
 ### Render — disarankan (satu Node service)
 
@@ -371,18 +386,16 @@ docker run -p 4100:4100 --env-file .env melajah-ai
 
 Buka `http://localhost:4100`. Express menyajikan API dan `client/dist`.
 
-### Vercel — mode demo lokal otomatis
+### Vercel — mode demo lokal (tanpa Upstash)
 
-Repo sudah menyertakan `vercel.json`. Jika Vercel hanya menjalankan frontend:
+Tanpa database bersama, Vercel hanya bisa menjalankan frontend:
 
-- Semua state sesi disimpan di `localStorage` browser.
+- Semua state sesi disimpan di `localStorage` browser dan hanya berlaku di browser itu.
 - Bank soal tetap berfungsi; AI memakai penilaian kata kunci lokal.
 - Penyelenggara membuat sesi, lalu dapat **menambahkan pemain demo** langsung dari layar penyelenggara dan mencatat jawaban mereka di panel demo. Ini bisa dimainkan di satu layar tanpa backend.
 - Alternatifnya, tekan **Buka tab pemain** untuk setiap pemain di browser yang sama.
-- Pemain di HP/perangkat lain tidak bisa bergabung pada mode ini; kode/QR memerlukan backend.
+- Pemain di HP/perangkat lain tidak bisa bergabung pada mode ini; aktifkan Upstash Redis seperti di atas.
 - Materi sendiri dan AI server tidak tersedia di mode ini.
-
-Untuk pemain di perangkat berbeda, deploy backend Node (Render/Koyeb/Railway/VPS), lalu set `VITE_API_URL` di Vercel dan `CLIENT_ORIGIN` di backend.
 
 ### Frontend dan backend terpisah
 
@@ -391,11 +404,12 @@ Jika frontend di Vercel/Netlify dan backend di Render/Railway:
 - Deploy backend sebagai Node service.
 - Set `VITE_API_URL=https://backend-anda` saat build frontend.
 - Set `CLIENT_ORIGIN=https://frontend-anda` di backend.
-- Jangan gunakan Vercel/Netlify Functions untuk backend ini karena sesi disimpan di memori dan akan hilang/berbeda antar-instance.
+- Backend boleh multi-instance jika `UPSTASH_REDIS_REST_URL` dan `UPSTASH_REDIS_REST_TOKEN` diisi; tanpa itu sesi hanya ada di satu proses.
 
 ### Catatan penting sesi
 
-Sesi disimpan **di memori proses**. Gunakan **satu instance** backend dan jangan biarkan instance tidur saat permainan berlangsung. Render free tier bisa tidur setelah tidak aktif, sehingga sesi hilang. Untuk kelas yang berjalan lama, gunakan instance always-on atau tambahkan Redis sebagai session store.
+- **Dengan Upstash Redis:** sesi dibagi antar-instance dan tahan restart fungsi Vercel. TTL default 6 jam (`SESSION_TTL_MS`).
+- **Tanpa Upstash:** sesi disimpan **di memori proses**. Gunakan **satu instance** backend dan jangan biarkan instance tidur saat permainan berlangsung. Render free tier bisa tidur setelah tidak aktif, sehingga sesi hilang.
 
 ## Build produksi
 

@@ -77,9 +77,9 @@ export default function JoinPage({ initialCode = "", onBack, onJoined, onHost })
           </p>
           {localMode && (
             <p className="mx-auto mt-3 max-w-xl rounded border border-line bg-gold-soft px-3 py-2 text-[0.8rem] font-semibold leading-snug text-ink-2">
-              <strong className="text-ink">Mode demo Vercel:</strong> mainkan di satu
-              layar. Buka mode penyelenggara, buat sesi, lalu tambahkan pemain demo di
-              sana. HP/browser lain membutuhkan backend.
+              <strong className="text-ink">Mode demo lokal:</strong> room hanya tersimpan
+              di browser ini. Untuk pemain di HP, penyelenggara harus membuat room di
+              server (Vercel + Upstash Redis).
             </p>
           )}
         </div>

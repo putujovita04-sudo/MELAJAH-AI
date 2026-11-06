@@ -185,7 +185,16 @@ export default function HostPage({ onBack, onSessionCreated }) {
                 <strong className="text-ink">Mode demo Vercel.</strong> Backend tidak
                 terdeteksi, jadi sesi berjalan lokal di browser ini. Kamu bisa
                 menambahkan pemain demo langsung dari layar penyelenggara. Untuk
-                permainan multi-perangkat, deploy backend Node.
+                permainan multi-perangkat, aktifkan backend (Vercel + Upstash Redis).
+              </div>
+            )}
+            {!localMode && health && health.serverless && health.sharedStore === false && (
+              <div className="mt-3 rounded border-2 border-accent bg-accent-soft p-3 text-[0.84rem] font-semibold leading-snug text-ink-2">
+                <strong className="text-ink">Room lintas perangkat belum aktif.</strong>{" "}
+                Hubungkan Upstash Redis ke project Vercel (env{" "}
+                <code>UPSTASH_REDIS_REST_URL</code> dan{" "}
+                <code>UPSTASH_REDIS_REST_TOKEN</code>), lalu redeploy. Tanpa itu,
+                pemain di HP tidak bisa masuk dengan kode room.
               </div>
             )}
           </div>

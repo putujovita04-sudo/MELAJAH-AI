@@ -102,7 +102,7 @@ const requireSession = (code) => {
   const session = getSession(code);
   if (!session) {
     throw new Error(
-      "Sesi demo tidak ditemukan di browser ini. Di Vercel, mainkan di satu layar: buka mode penyelenggara, buat sesi, lalu gunakan “Tambah pemain demo”. HP/browser lain membutuhkan backend.",
+      "Room demo tidak ditemukan di browser ini. Buat sesi baru dari layar penyelenggara, atau pakai room server agar pemain di HP bisa bergabung.",
     );
   }
   return session;
@@ -465,6 +465,8 @@ export const createLocalSession = ({ maxPlayers, materialId, categories, difficu
     state: serialize(session, true),
   };
 };
+
+export const hasLocalSession = (code) => Boolean(getSession(code));
 
 export const getLocalState = (code, hostToken = null) => {
   const session = requireSession(code);

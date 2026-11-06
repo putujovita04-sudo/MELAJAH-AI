@@ -7,6 +7,8 @@ import { fileURLToPath } from "node:url";
 import { ENV, isAiEnabled } from "./config/ai.js";
 import apiRoutes from "./routes/apiRoutes.js";
 import sessionRoutes from "./routes/sessionRoutes.js";
+import { isSharedStoreEnabled } from "./services/redisStore.js";
+import { sharedSessionMiddleware } from "./services/sessionPersistence.js";
 import { getBankSize } from "./services/questionService.js";
 
 const app = express();
@@ -27,17 +29,32 @@ const allowedOrigins = ENV.clientOrigin
   .filter(Boolean);
 
 app.use(
-  cors({
-    origin(origin, callback) {
-      if (!origin || ENV.nodeEnv !== "production" || allowedOrigins.includes(origin)) {
-        callback(null, true);
-        return;
-      }
-      callback(new Error("Origin tidak diizinkan"));
-    },
-  }),
+  (req, res, next) => {
+    const origin = req.get("origin");
+    const host = req.get("host");
+    const sameHost =
+      Boolean(origin && host) &&
+      (origin === `https://${host}` || origin === `http://${host}`);
+    const allowed =
+      !origin ||
+      ENV.nodeEnv !== "production" ||
+      sameHost ||
+      allowedOrigins.includes(origin);
+    cors({ origin: allowed })(req, res, next);
+  },
 );
-app.use(express.json({ limit: "128kb" }));
+const jsonParser = express.json({ limit: "128kb" });
+app.use((req, res, next) => {
+  // Di Vercel, body JSON kadang sudah diparse oleh runtime. Jangan parse ulang.
+  if (req.body !== undefined) {
+    next();
+    return;
+  }
+  jsonParser(req, res, next);
+});
+
+// Sesi bersama (Upstash) — penting untuk Vercel/serverless dan multi-instance.
+app.use(sharedSessionMiddleware);
 
 const rateBuckets = new Map();
 const apiLimiter = (req, res, next) => {
@@ -62,10 +79,26 @@ app.get("/api/health", (req, res) => {
     fallback: !isAiEnabled(),
     bankSize: getBankSize(),
     service: "melajah-ai",
+    sharedStore: isSharedStoreEnabled(),
+    serverless: Boolean(process.env.VERCEL),
   });
 });
 
 app.use("/api", apiLimiter);
+
+// Di Vercel tanpa Upstash, sesi hanya hidup di satu instance dan room
+// multi-perangkat akan gagal secara acak. Tolak dengan pesan yang jelas.
+app.use("/api/sessions", (req, res, next) => {
+  if (process.env.VERCEL && !isSharedStoreEnabled()) {
+    res.status(503).json({
+      error:
+        "Room lintas perangkat belum aktif. Hubungkan Upstash Redis ke project Vercel (UPSTASH_REDIS_REST_URL & UPSTASH_REDIS_REST_TOKEN), lalu redeploy.",
+    });
+    return;
+  }
+  next();
+});
+
 app.use("/api", apiRoutes);
 app.use("/api", sessionRoutes);
 

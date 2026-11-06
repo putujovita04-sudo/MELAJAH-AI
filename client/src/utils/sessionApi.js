@@ -4,6 +4,7 @@ import {
   createLocalSession,
   endLocalSession,
   getLocalState,
+  hasLocalSession,
   joinLocalSession,
   overrideLocalVerdict,
   removeLocalPlayer,
@@ -24,7 +25,7 @@ const parseJson = async (response) => {
   }
 };
 
-const request = async (path, { method = "GET", body, hostToken } = {}) => {
+const request = async (path, { method = "GET", body, hostToken, timeoutMs = 15000 } = {}) => {
   let response;
   try {
     response = await fetch(`${API_BASE}${path}`, {
@@ -34,13 +35,13 @@ const request = async (path, { method = "GET", body, hostToken } = {}) => {
         ...(hostToken ? { "x-session-token": hostToken } : {}),
       },
       body: body ? JSON.stringify(body) : undefined,
-      signal: AbortSignal.timeout?.(15000),
+      signal: AbortSignal.timeout?.(timeoutMs),
     });
   } catch (error) {
     const wrapped = new Error(
       error?.name === "TimeoutError"
-        ? "Server tidak merespons. Beralih ke mode demo lokal."
-        : "Backend tidak tersedia. Beralih ke mode demo lokal.",
+        ? "Server game tidak merespons. Periksa koneksi lalu coba lagi."
+        : "Tidak bisa menghubungi server game. Periksa koneksi internet lalu coba lagi.",
     );
     wrapped.code = "NETWORK";
     wrapped.cause = error;
@@ -50,7 +51,7 @@ const request = async (path, { method = "GET", body, hostToken } = {}) => {
   const data = await parseJson(response);
   if (data === null) {
     const error = new Error(
-      "Deployment ini tidak memiliki backend API. Beralih ke mode demo lokal.",
+      "Server game tidak aktif di alamat ini. Penyelenggara perlu mengaktifkan backend (Vercel + Upstash Redis).",
     );
     error.code = "NON_JSON";
     error.status = response.status;
@@ -64,39 +65,54 @@ const request = async (path, { method = "GET", body, hostToken } = {}) => {
   return data;
 };
 
-const run = async (serverCall, localCall) => {
-  if (getLocalMode()) return localCall();
+const run = async (code, serverCall, localCall) => {
+  // Room demo yang dibuat/diikuti di browser ini selalu diprioritaskan,
+  // termasuk setelah reload saat flag mode lokal belum tentu ter-set.
+  if (getLocalMode() || hasLocalSession(code)) return localCall();
+  return serverCall();
+};
+
+export const createGameSession = async (payload) => {
+  // Mode demo (satu layar): tidak perlu menghubungi server.
+  if (getLocalMode()) {
+    return createLocalSession(payload);
+  }
+
+  // Selain itu, coba server dulu supaya room bisa diikuti pemain lain.
   try {
-    return await serverCall();
+    const result = await request("/api/sessions", { method: "POST", body: payload });
+    setLocalMode(false);
+    return result;
   } catch (error) {
-    if (error?.code === "NON_JSON" || error?.code === "NETWORK") {
+    if (
+      error?.code === "NON_JSON" ||
+      error?.code === "NETWORK" ||
+      error?.status === 503
+    ) {
       setLocalMode(true);
-      return localCall();
+      return createLocalSession(payload);
     }
     throw error;
   }
 };
 
-export const createGameSession = (payload) =>
-  run(
-    () => request("/api/sessions", { method: "POST", body: payload }),
-    () => createLocalSession(payload),
-  );
-
 export const fetchPublicState = (code) =>
   run(
+    code,
     () => request(`/api/sessions/${encodeURIComponent(code)}`),
     () => getLocalState(code),
   );
 
 export const fetchHostState = (code, hostToken) =>
   run(
+    code,
     () => request(`/api/sessions/${encodeURIComponent(code)}/host`, { hostToken }),
     () => getLocalState(code, hostToken),
   );
 
 export const fetchSessionState = (code, hostToken = null) =>
   run(
+    code,
     () =>
       hostToken
         ? request(`/api/sessions/${encodeURIComponent(code)}/host`, { hostToken })
@@ -104,18 +120,29 @@ export const fetchSessionState = (code, hostToken = null) =>
     () => getLocalState(code, hostToken),
   );
 
-export const joinGameSession = (code, name) =>
-  run(
-    () =>
-      request(`/api/sessions/${encodeURIComponent(code)}/join`, {
-        method: "POST",
-        body: { name },
-      }),
-    () => joinLocalSession(code, name),
-  );
+export const joinGameSession = (code, name) => {
+  const normalized = String(code ?? "").trim().toUpperCase();
+
+  // Room demo yang dibuat di browser ini tetap bisa dipakai (satu perangkat).
+  if (hasLocalSession(normalized)) {
+    setLocalMode(true);
+    return Promise.resolve().then(() => joinLocalSession(normalized, name));
+  }
+
+  // Selain itu, room harus ada di server bersama. Jangan diam-diam jatuh ke
+  // mode lokal: HP pemain tidak punya state room milik admin.
+  return request(`/api/sessions/${encodeURIComponent(normalized)}/join`, {
+    method: "POST",
+    body: { name },
+  }).then((result) => {
+    setLocalMode(false);
+    return result;
+  });
+};
 
 export const startGameSession = (code, hostToken) =>
   run(
+    code,
     () =>
       request(`/api/sessions/${encodeURIComponent(code)}/start`, {
         method: "POST",
@@ -126,6 +153,7 @@ export const startGameSession = (code, hostToken) =>
 
 export const sendDice = (code, hostToken, value = null) =>
   run(
+    code,
     () =>
       request(`/api/sessions/${encodeURIComponent(code)}/dice`, {
         method: "POST",
@@ -137,16 +165,20 @@ export const sendDice = (code, hostToken, value = null) =>
 
 export const answerQuestion = (code, { playerId, playerToken, answer }) =>
   run(
+    code,
     () =>
       request(`/api/sessions/${encodeURIComponent(code)}/answer`, {
         method: "POST",
         body: { playerId, playerToken, answer },
+        // Juri AI bisa butuh waktu; beri ruang lebih dari batas AI (15 dtk).
+        timeoutMs: 25000,
       }),
     () => answerLocalQuestion(code, { playerId, playerToken, answer }),
   );
 
 export const overrideSessionVerdict = (code, hostToken, { score, comment }) =>
   run(
+    code,
     () =>
       request(`/api/sessions/${encodeURIComponent(code)}/override`, {
         method: "POST",
@@ -158,6 +190,7 @@ export const overrideSessionVerdict = (code, hostToken, { score, comment }) =>
 
 export const resolveSessionVerdict = (code, hostToken) =>
   run(
+    code,
     () =>
       request(`/api/sessions/${encodeURIComponent(code)}/resolve`, {
         method: "POST",
@@ -168,6 +201,7 @@ export const resolveSessionVerdict = (code, hostToken) =>
 
 export const skipSessionQuestion = (code, hostToken) =>
   run(
+    code,
     () =>
       request(`/api/sessions/${encodeURIComponent(code)}/skip`, {
         method: "POST",
@@ -178,6 +212,7 @@ export const skipSessionQuestion = (code, hostToken) =>
 
 export const endGameSession = (code, hostToken) =>
   run(
+    code,
     () =>
       request(`/api/sessions/${encodeURIComponent(code)}/end`, {
         method: "POST",
@@ -188,6 +223,7 @@ export const endGameSession = (code, hostToken) =>
 
 export const removeSessionPlayer = (code, hostToken, playerId) =>
   run(
+    code,
     () =>
       request(`/api/sessions/${encodeURIComponent(code)}/players/remove`, {
         method: "POST",
@@ -199,6 +235,7 @@ export const removeSessionPlayer = (code, hostToken, playerId) =>
 
 export const reorderSessionPlayers = (code, hostToken, order) =>
   run(
+    code,
     () =>
       request(`/api/sessions/${encodeURIComponent(code)}/order`, {
         method: "POST",

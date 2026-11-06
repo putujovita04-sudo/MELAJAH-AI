@@ -1,13 +1,14 @@
-import { readFileSync } from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { createRequire } from "node:module";
 
-const serviceDir = path.dirname(fileURLToPath(import.meta.url));
-const bankPath = path.resolve(serviceDir, "../../../client/src/data/questions.json");
+/**
+ * Bank soal dibaca lewat require (bukan readFileSync + path dinamis) supaya
+ * ikut ter-bundle saat server dijalankan sebagai Vercel Function.
+ */
+const require = createRequire(import.meta.url);
 
 let bank = { questions: [], categories: [] };
 try {
-  bank = JSON.parse(readFileSync(bankPath, "utf8"));
+  bank = require("../../../client/src/data/questions.json");
 } catch (error) {
   console.error("[MELAJAH] Gagal membaca bank soal:", error.message);
 }
