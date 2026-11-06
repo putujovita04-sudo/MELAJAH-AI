@@ -190,6 +190,7 @@ export default function HostGamePage({ session, onHome, onNewSession }) {
   const current = state.players.find((player) => player.id === state.currentPlayerId) ?? null;
   const isLobby = state.phase === "lobby";
   const active = !isLobby;
+  const questionPanelOpen = ["question", "judging", "verdict"].includes(state.phase);
 
   return (
     <div className={cn("min-h-svh", active ? "pb-10" : "pb-12")}>
@@ -243,7 +244,10 @@ export default function HostGamePage({ session, onHome, onNewSession }) {
 
         <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1fr)_390px] lg:items-start">
           <section className="order-2 lg:order-1" aria-label="Papan permainan">
-            <div className="mx-auto w-full" style={{ maxWidth: "min(100%, 70svh)" }}>
+            <div
+              className="mx-auto w-full transition-[max-width] duration-200"
+              style={{ maxWidth: questionPanelOpen ? "min(100%, 58svh)" : "min(100%, 70svh)" }}
+            >
               {active && <div className="mb-2"><HostNotice game={state} /></div>}
               <Board
                 board={state.board}
@@ -254,6 +258,31 @@ export default function HostGamePage({ session, onHome, onNewSession }) {
               <div className="mt-2">
                 <BoardLegend />
               </div>
+              {questionPanelOpen && (
+                <div className="mt-3">
+                  <QuestionPanel
+                    state={state}
+                    busy={busy}
+                    secondsLeft={secondsLeft}
+                    manualScore={manualScore}
+                    setManualScore={setManualScore}
+                    manualComment={manualComment}
+                    setManualComment={setManualComment}
+                    localMode={state.localMode}
+                    onHostAnswer={(answer) => run(() => answerLocalAsHost(code, hostToken, answer))}
+                    onSkip={() => run(() => skipSessionQuestion(code, hostToken))}
+                    onOverride={() =>
+                      run(() =>
+                        overrideSessionVerdict(code, hostToken, {
+                          score: Number(manualScore),
+                          comment: manualComment,
+                        }),
+                      )
+                    }
+                    onResolve={() => run(() => resolveSessionVerdict(code, hostToken))}
+                  />
+                </div>
+              )}
             </div>
           </section>
 
@@ -553,30 +582,6 @@ export default function HostGamePage({ session, onHome, onNewSession }) {
                     </p>
                   </div>
                 </section>
-
-                {["question", "judging", "verdict"].includes(state.phase) && (
-                  <QuestionPanel
-                    state={state}
-                    busy={busy}
-                    secondsLeft={secondsLeft}
-                    manualScore={manualScore}
-                    setManualScore={setManualScore}
-                    manualComment={manualComment}
-                    setManualComment={setManualComment}
-                    localMode={state.localMode}
-                    onHostAnswer={(answer) => run(() => answerLocalAsHost(code, hostToken, answer))}
-                    onSkip={() => run(() => skipSessionQuestion(code, hostToken))}
-                    onOverride={() =>
-                      run(() =>
-                        overrideSessionVerdict(code, hostToken, {
-                          score: Number(manualScore),
-                          comment: manualComment,
-                        }),
-                      )
-                    }
-                    onResolve={() => run(() => resolveSessionVerdict(code, hostToken))}
-                  />
-                )}
 
                 <section className="panel-soft p-2.5" aria-label="Skor pemain">
                   <div className="mb-1.5 flex items-center justify-between px-0.5">
