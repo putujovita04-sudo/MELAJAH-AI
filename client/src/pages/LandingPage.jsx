@@ -201,10 +201,6 @@ export default function LandingPage({ onStart, onHost, onHowTo }) {
 
         <footer className="flex flex-col items-start justify-between gap-3 border-t-2 border-line py-6 text-[0.78rem] font-semibold text-ink-2 sm:flex-row sm:items-center">
           <Logo compact />
-          <p className="max-w-md text-pretty">
-            Dibuat untuk belajar budaya Bali dengan gembira. Tanpa akun dan tanpa data
-            pribadi — cukup nama panggilan.
-          </p>
           <button type="button" onClick={onHowTo} className="link-underline font-bold text-ink">
             Cara bermain
           </button>
